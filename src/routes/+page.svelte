@@ -18,6 +18,9 @@
   const SEARCH_LIMIT = 60;
   const OVERLAY_EVENT = "overlay://focus-search";
   const formatter = new Intl.NumberFormat("en-US");
+  let appReady = $state(false);
+  let loadProgress = $state(0);
+  let loadStatus = $state("Initializing...");
   let query = $state("");
   let loading = $state(false);
   let errorMessage = $state("");
@@ -52,12 +55,35 @@
     return "";
   });
 
-  async function loadCatalogInfo() {
+  function sleep(ms: number) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  async function loadApp() {
+    loadStatus = "Loading word index...";
+    loadProgress = 20;
+    await sleep(300);
+
     try {
       catalog = await invoke<CatalogInfo>("catalog_info");
+      loadProgress = 50;
+      loadStatus = "Fetching wordlist info...";
+      await sleep(200);
+
       wordlists = await invoke<WordlistInfo[]>("wordlist_info");
+      loadProgress = 75;
+      loadStatus = `${formatter.format(catalog.wordCount)} words loaded`;
+      await sleep(300);
+
+      loadProgress = 100;
+      loadStatus = "Ready";
+      await sleep(400);
+
+      appReady = true;
+      await focusSearch(true);
     } catch (error) {
-      errorMessage = `Failed to load catalog: ${String(error)}`;
+      errorMessage = `Failed to load: ${String(error)}`;
+      appReady = true;
     }
   }
 
@@ -197,8 +223,7 @@
 
   onMount(() => {
     let stopListening: (() => void) | undefined;
-    void loadCatalogInfo();
-    void focusSearch(true);
+    void loadApp();
     void listen(OVERLAY_EVENT, async () => {
       await focusSearch(true);
     }).then((unlisten) => {
@@ -217,6 +242,16 @@
   <title>XppaiCyber | SambungKata VIP</title>
 </svelte:head>
 
+{#if !appReady}
+<div class="splash">
+  <pre class="ascii-logo">██╗  ██╗██████╗ ██████╗  █████╗ ██╗ ██████╗██╗   ██╗██████╗ ███████╗██████╗{"\n"}╚██╗██╔╝██╔══██╗██╔══██╗██╔══██╗██║██╔════╝╚██╗ ██╔╝██╔══██╗██╔════╝██╔══██╗{"\n"} ╚███╔╝ ██████╔╝██████╔╝███████║██║██║      ╚████╔╝ ██████╔╝█████╗  ██████╔╝{"\n"} ██╔██╗ ██╔═══╝ ██╔═══╝ ██╔══██║██║██║       ╚██╔╝  ██╔══██╗██╔══╝  ██╔══██╗{"\n"}██╔╝ ██╗██║     ██║     ██║  ██║██║╚██████╗   ██║   ██████╔╝███████╗██║  ██║{"\n"}╚═╝  ╚═╝╚═╝     ╚═╝     ╚═╝  ╚═╝╚═╝ ╚═════╝   ╚═╝   ╚═════╝ ╚══════╝╚═╝  ╚═╝</pre>
+  <div class="splash-sub">SambungKata VIP</div>
+  <div class="progress-track">
+    <div class="progress-fill" style:width="{loadProgress}%"></div>
+  </div>
+  <div class="splash-status">{loadStatus}</div>
+</div>
+{:else}
 <div class="frame">
   <div class="titlebar">
     <span class="titlebar-text">XppaiCyber | SambungKata VIP</span>
@@ -282,6 +317,7 @@
     <span>^Z undo</span>
   </div>
 </div>
+{/if}
 
 <style>
   :global(body) {
@@ -294,6 +330,53 @@
   :global(button),
   :global(input) {
     font: inherit;
+  }
+
+  .splash {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 20px;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+  .ascii-logo {
+    margin: 0;
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 0.38rem;
+    line-height: 1.2;
+    white-space: pre;
+    background: linear-gradient(180deg, #a38adf, #7ec8e3);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-align: center;
+  }
+  .splash-sub {
+    font-size: 0.8rem;
+    color: #9ea6c0;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+  .progress-track {
+    width: 200px;
+    height: 3px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.06);
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, #a38adf, #7ec8e3);
+    transition: width 0.4s ease;
+  }
+  .splash-status {
+    font-size: 0.7rem;
+    color: rgba(158, 166, 192, 0.6);
   }
 
   .frame {
@@ -315,8 +398,17 @@
   }
   .titlebar-text {
     font-size: 0.82rem;
-    color: #9ea6c0;
     letter-spacing: 0.02em;
+    background: linear-gradient(90deg, #a38adf, #7ec8e3, #cbb7ff, #a38adf);
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: shimmer 3s linear infinite;
+  }
+  @keyframes shimmer {
+    0% { background-position: 100% 0; }
+    100% { background-position: -100% 0; }
   }
   .close-btn {
     position: absolute;
