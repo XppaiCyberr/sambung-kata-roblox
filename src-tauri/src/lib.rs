@@ -119,26 +119,23 @@ impl WordIndex {
                 total_matches: 0,
                 total_words: self.total_words(),
                 results: Vec::new(),
-                message: "Ketik awalan kata untuk mulai mencari.".to_string(),
+                message: "Type a word prefix to start searching.".to_string(),
             };
         }
 
         let (total_matches, results) = self.search_prefix(&needle, limit);
 
         let message = if total_matches == 0 {
-            format!("Tidak ada kata yang diawali \"{}\".", needle)
+            format!("No words start with \"{}\".", needle)
         } else if total_matches > results.len() {
             format!(
-                "Menampilkan {} dari {} hasil untuk awalan \"{}\".",
+                "Showing {} of {} results for prefix \"{}\".",
                 results.len(),
                 total_matches,
                 needle
             )
         } else {
-            format!(
-                "Ditemukan {} hasil untuk awalan \"{}\".",
-                total_matches, needle
-            )
+            format!("Found {} results for prefix \"{}\".", total_matches, needle)
         };
 
         SearchResponse {

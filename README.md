@@ -1,13 +1,25 @@
-# Sambung Kata Overlay
+# XppaiCyber | SambungKata VIP
 
-Desktop helper for Indonesian `sambung kata`, built with `Tauri 2 + Svelte + TypeScript + Rust`.
+Desktop overlay helper for Indonesian *sambung kata*, built with **Tauri 2 + SvelteKit + TypeScript + Rust**.
 
 ## What It Does
 
-- shows an always-on-top overlay window
-- searches an Indonesian word list locally
-- uses awalan-only search
-- toggles the overlay with `Space`
+- Always-on-top overlay window with minimalist UI
+- Prefix search across a merged Indonesian word list (~100k words)
+- Remove used words during a session, undo with Ctrl+Z
+- Toggle overlay visibility with `Space` global shortcut
+
+## Keyboard Shortcuts
+
+| Key | Action |
+|-----|--------|
+| Space | Toggle overlay (global) |
+| Arrow Up/Down | Navigate results |
+| PgUp/PgDn | Jump 8 results |
+| Home/End | Jump to first/last |
+| Enter/Delete | Remove selected word |
+| Ctrl+Z | Undo last removal |
+| Escape | Hide overlay |
 
 ## Run
 
@@ -21,8 +33,3 @@ npm run tauri dev
 ```bash
 npm run tauri build
 ```
-
-## Notes
-
-- The app avoids system-wide keystroke capture. It only uses a global shortcut to show or hide the overlay.
-- The bundled dictionary currently merges `00-indonesian-wordlist.lst` and `01-kbbi3-2001-sort-alpha.lst` from `geovedi/indonesian-wordlist`, with duplicates removed at load time.

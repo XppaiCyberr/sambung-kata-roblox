@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Sambung Kata Overlay",
+  "productName": "XppaiCyber - SambungKata VIP",
   "version": "0.1.0",
   "identifier": "com.robexploit.sambungkata",
   "build": {
@@ -12,11 +12,11 @@
   "app": {
     "windows": [
       {
-        "title": "Sambung Kata Overlay",
-        "width": 404,
-        "height": 560,
-        "minWidth": 340,
-        "minHeight": 420,
+        "title": "XppaiCyber - SambungKata VIP",
+        "width": 420,
+        "height": 400,
+        "minWidth": 320,
+        "minHeight": 300,
         "x": 0,
         "y": 0,
         "decorations": false,
