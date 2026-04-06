@@ -7,9 +7,23 @@ use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Manager, Window};
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutEvent, ShortcutState};
 
-const EMBEDDED_WORDLISTS: [&[u8]; 2] = [
-    include_bytes!("../resources/indonesian-wordlist.txt"),
-    include_bytes!("../resources/kbbi3-2001-sort-alpha.lst"),
+const EMBEDDED_WORDLISTS: [(&str, &[u8]); 4] = [
+    (
+        "indonesian-wordlist.txt",
+        include_bytes!("../resources/indonesian-wordlist.txt"),
+    ),
+    (
+        "kbbi3-2001-sort-alpha.lst",
+        include_bytes!("../resources/kbbi3-2001-sort-alpha.lst"),
+    ),
+    (
+        "ivanlanin2011-sort-alpha.lst",
+        include_bytes!("../resources/ivanlanin2011-sort-alpha.lst"),
+    ),
+    (
+        "myspell2006-sort-alpha.lst",
+        include_bytes!("../resources/myspell2006-sort-alpha.lst"),
+    ),
 ];
 const OVERLAY_EVENT: &str = "overlay://focus-search";
 const TOGGLE_SHORTCUT: &str = "Space";
@@ -30,6 +44,13 @@ struct SearchRequest {
 struct CatalogInfo {
     shortcut: String,
     word_count: usize,
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct WordlistInfo {
+    name: String,
+    raw_lines: usize,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -61,6 +82,7 @@ struct WordEntry {
 struct WordIndex {
     entries: Vec<WordEntry>,
     buckets: HashMap<String, Vec<usize>>,
+    wordlists: Vec<WordlistInfo>,
 }
 
 impl WordIndex {
@@ -68,9 +90,15 @@ impl WordIndex {
         let mut entries = Vec::new();
         let mut buckets: HashMap<String, Vec<usize>> = HashMap::new();
         let mut seen = HashSet::new();
+        let mut wordlists = Vec::new();
 
-        for bytes in EMBEDDED_WORDLISTS {
+        for (name, bytes) in EMBEDDED_WORDLISTS {
             let content = String::from_utf8_lossy(bytes);
+            let raw_lines = content.lines().filter(|l| !l.trim().is_empty()).count();
+            wordlists.push(WordlistInfo {
+                name: name.to_string(),
+                raw_lines,
+            });
 
             for raw_line in content.lines() {
                 let display = raw_line.trim();
@@ -100,7 +128,7 @@ impl WordIndex {
             }
         }
 
-        Self { entries, buckets }
+        Self { entries, buckets, wordlists }
     }
 
     fn total_words(&self) -> usize {
@@ -245,6 +273,11 @@ fn handle_shortcut(app: &AppHandle, event: ShortcutEvent) {
 }
 
 #[tauri::command]
+fn wordlist_info() -> Vec<WordlistInfo> {
+    word_index().wordlists.clone()
+}
+
+#[tauri::command]
 fn catalog_info() -> CatalogInfo {
     CatalogInfo {
         shortcut: TOGGLE_SHORTCUT.to_string(),
@@ -293,6 +326,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             catalog_info,
+            wordlist_info,
             search_words,
             hide_overlay,
             quit_app

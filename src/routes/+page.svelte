@@ -4,6 +4,7 @@
   import { onMount, tick } from "svelte";
 
   type CatalogInfo = { shortcut: string; wordCount: number };
+  type WordlistInfo = { name: string; rawLines: number };
   type WordSuggestion = { word: string; length: number };
   type SearchResponse = {
     query: string;
@@ -17,7 +18,6 @@
   const SEARCH_LIMIT = 60;
   const OVERLAY_EVENT = "overlay://focus-search";
   const formatter = new Intl.NumberFormat("en-US");
-
   let query = $state("");
   let loading = $state(false);
   let errorMessage = $state("");
@@ -27,6 +27,7 @@
   let removalHistory = $state<string[]>([]);
   let response = $state<SearchResponse | null>(null);
   let catalog = $state<CatalogInfo>({ shortcut: "Space", wordCount: 0 });
+  let wordlists = $state<WordlistInfo[]>([]);
 
   let inputElement = $state<HTMLInputElement | null>(null);
   let feedbackTimer: ReturnType<typeof setTimeout> | undefined;
@@ -54,6 +55,7 @@
   async function loadCatalogInfo() {
     try {
       catalog = await invoke<CatalogInfo>("catalog_info");
+      wordlists = await invoke<WordlistInfo[]>("wordlist_info");
     } catch (error) {
       errorMessage = `Failed to load catalog: ${String(error)}`;
     }
@@ -239,6 +241,13 @@
         <span>{infoLine}</span>
       {/if}
     </div>
+    {#if wordlists.length > 0 && !query}
+      <div class="wordlist-tags">
+        {#each wordlists as wl}
+          <span class="wl-tag">{wl.name} <small>({formatter.format(wl.rawLines)})</small></span>
+        {/each}
+      </div>
+    {/if}
   </div>
 
   <div class="word-list">
@@ -255,7 +264,11 @@
             removeWord(result.word);
           }}
         >
-          {result.word}
+          {#if response?.needle && result.word.toLowerCase().startsWith(response.needle)}
+            <strong class="prefix">{result.word.slice(0, response.needle.length)}</strong>{result.word.slice(response.needle.length)}
+          {:else}
+            {result.word}
+          {/if}
         </button>
       {/each}
     {:else if query}
@@ -266,7 +279,7 @@
   <div class="hint-bar">
     <span>Esc hide</span>
     <span>Enter remove</span>
-    <span>Ctrl+Z undo</span>
+    <span>^Z undo</span>
   </div>
 </div>
 
@@ -354,6 +367,22 @@
     font-size: 0.75rem;
     color: #9ea6c0;
   }
+  .wordlist-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 6px 0 0;
+  }
+  .wl-tag {
+    padding: 2px 8px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.05);
+    font-size: 0.68rem;
+    color: #9ea6c0;
+  }
+  .wl-tag small {
+    color: rgba(158, 166, 192, 0.6);
+  }
 
   .word-list {
     min-height: 0;
@@ -383,6 +412,9 @@
     font-size: 0.9rem;
     text-align: left;
     cursor: pointer;
+  }
+  .word-row .prefix {
+    color: #a38adf;
   }
   .word-row.selected {
     background: rgba(163, 138, 223, 0.12);

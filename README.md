@@ -5,7 +5,12 @@ Desktop overlay helper for Indonesian *sambung kata*, built with **Tauri 2 + Sve
 ## What It Does
 
 - Always-on-top overlay window with minimalist UI
-- Prefix search across a merged Indonesian word list (~100k words)
+- Prefix search with highlighted matching prefix
+- Merged Indonesian word lists (deduplicated at load time):
+  - `indonesian-wordlist.txt`
+  - `kbbi3-2001-sort-alpha.lst`
+  - `ivanlanin2011-sort-alpha.lst`
+  - `myspell2006-sort-alpha.lst`
 - Remove used words during a session, undo with Ctrl+Z
 - Toggle overlay visibility with `Space` global shortcut
 
