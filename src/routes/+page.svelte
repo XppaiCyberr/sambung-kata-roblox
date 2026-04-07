@@ -219,13 +219,17 @@
   async function handleEnter() {
     if (!selectedWord) return;
 
+    const wordToType = selectedWord.word;
+
     try {
-      // TODO: typingSpeed will be added in Task 4
       await invoke("type_and_hide", {
-        word: selectedWord.word,
+        word: wordToType,
         query: query,
         speed: typingSpeed,
       });
+
+      // Remove the word after typing completes
+      removeWord(wordToType);
 
       // Reset UI after typing
       query = "";
