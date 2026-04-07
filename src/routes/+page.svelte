@@ -152,6 +152,14 @@
   }
 
   function handleKeydown(event: KeyboardEvent) {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      if (selectedWord) {
+        void handleEnter();
+      }
+      return;
+    }
+
     if (event.ctrlKey && event.key.toLowerCase() === "z") {
       event.preventDefault();
       undoLastRemoval();
@@ -192,9 +200,29 @@
       if (visibleCount > 0) selectedIndex = visibleCount - 1;
       return;
     }
-    if (event.key === "Enter" || event.key === "Delete") {
+    if (event.key === "Delete") {
       event.preventDefault();
       removeSelected();
+    }
+  }
+
+  async function handleEnter() {
+    if (!selectedWord) return;
+
+    try {
+      // TODO: typingSpeed will be added in Task 4
+      await invoke("type_and_hide", {
+        word: selectedWord.word,
+        query: query,
+        speed: typingSpeed,
+      });
+
+      // Reset UI after typing
+      query = "";
+      response = null;
+      selectedIndex = 0;
+    } catch (error) {
+      errorMessage = `Failed to type: ${String(error)}`;
     }
   }
 
