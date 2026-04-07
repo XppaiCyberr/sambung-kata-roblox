@@ -32,6 +32,8 @@
   let catalog = $state<CatalogInfo>({ shortcut: "Space", wordCount: 0 });
   let wordlists = $state<WordlistInfo[]>([]);
   let typingSpeed = $state(50); // milliseconds per character
+  let showSpeedDialog = $state(false);
+  let speedDialogInput = $state(""); // temp input for dialog
 
   let inputElement = $state<HTMLInputElement | null>(null);
   let feedbackTimer: ReturnType<typeof setTimeout> | undefined;
@@ -205,6 +207,13 @@
       event.preventDefault();
       removeSelected();
     }
+
+    if (event.ctrlKey && event.key.toLowerCase() === "t") {
+      event.preventDefault();
+      showSpeedDialog = true;
+      speedDialogInput = typingSpeed.toString();
+      return;
+    }
   }
 
   async function handleEnter() {
@@ -232,6 +241,23 @@
       localStorage.setItem("typing_speed_ms", speed.toString());
       typingSpeed = speed;
     }
+  }
+
+  function applySpeedDialog() {
+    const parsed = parseInt(speedDialogInput, 10);
+    if (!isNaN(parsed) && parsed >= 10 && parsed <= 500) {
+      saveTypingSpeed(parsed);
+      showSpeedDialog = false;
+      feedback = `Typing speed set to ${parsed}ms`;
+      feedbackTimer = setTimeout(() => (feedback = ""), 2000);
+    } else {
+      errorMessage = "Speed must be between 10 and 500 ms";
+    }
+  }
+
+  function cancelSpeedDialog() {
+    showSpeedDialog = false;
+    speedDialogInput = "";
   }
 
   $effect(() => {
