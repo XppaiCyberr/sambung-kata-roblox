@@ -311,6 +311,40 @@ fn calculate_text_to_type(word: &str, query: &str) -> String {
     }
 }
 
+fn char_to_key(ch: char) -> enigo::Key {
+    use enigo::Key;
+    match ch.to_lowercase().next().unwrap_or(ch) {
+        'a' => Key::A,
+        'b' => Key::B,
+        'c' => Key::C,
+        'd' => Key::D,
+        'e' => Key::E,
+        'f' => Key::F,
+        'g' => Key::G,
+        'h' => Key::H,
+        'i' => Key::I,
+        'j' => Key::J,
+        'k' => Key::K,
+        'l' => Key::L,
+        'm' => Key::M,
+        'n' => Key::N,
+        'o' => Key::O,
+        'p' => Key::P,
+        'q' => Key::Q,
+        'r' => Key::R,
+        's' => Key::S,
+        't' => Key::T,
+        'u' => Key::U,
+        'v' => Key::V,
+        'w' => Key::W,
+        'x' => Key::X,
+        'y' => Key::Y,
+        'z' => Key::Z,
+        ' ' => Key::Space,
+        _ => Key::Space, // Default for unsupported characters
+    }
+}
+
 #[tauri::command]
 async fn type_and_hide(
     window: tauri::Window,
@@ -323,15 +357,24 @@ async fn type_and_hide(
     // Hide window immediately
     window.hide().map_err(|e| e.to_string())?;
 
-    // Simulate keystrokes with delay
-    use enigo::{Enigo, Settings, Keyboard};
+    // Simulate keystrokes with delay (using key presses for game compatibility)
+    use enigo::{Enigo, Settings, Keyboard, Direction};
     let mut enigo = Enigo::new(&Settings::default())
         .map_err(|e| format!("Failed to initialize keyboard controller: {:?}", e))?;
 
     for ch in text_to_type.chars() {
+        let key = char_to_key(ch);
+
+        // Press key
         enigo
-            .text(&ch.to_string())
-            .map_err(|e| format!("Failed to type character: {:?}", e))?;
+            .key(key, Direction::Press)
+            .map_err(|e| format!("Failed to press key: {:?}", e))?;
+
+        // Release key
+        enigo
+            .key(key, Direction::Release)
+            .map_err(|e| format!("Failed to release key: {:?}", e))?;
+
         tokio::time::sleep(std::time::Duration::from_millis(speed)).await;
     }
 
