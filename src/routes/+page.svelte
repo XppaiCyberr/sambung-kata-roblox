@@ -144,14 +144,14 @@
   }
 
   function undoLastRemoval() {
-    const last = removalHistory[removalHistory.length - 1];
-    if (!last) {
+    if (removedWords.length === 0) {
       flashFeedback("Nothing to undo.");
       return;
     }
-    removalHistory = removalHistory.slice(0, -1);
-    removedWords = removedWords.filter((w) => w !== last);
-    flashFeedback(`Restored: ${last}`);
+    const count = removedWords.length;
+    removedWords = [];
+    removalHistory = [];
+    flashFeedback(`Restored all ${count} removed words`);
   }
 
   function handleKeydown(event: KeyboardEvent) {
