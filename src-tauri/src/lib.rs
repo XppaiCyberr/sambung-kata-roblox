@@ -381,6 +381,15 @@ async fn type_and_hide(
         tokio::time::sleep(std::time::Duration::from_millis(speed)).await;
     }
 
+    // Press Enter to submit the word
+    tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+    enigo
+        .key(enigo::Key::Return, Direction::Press)
+        .map_err(|e| format!("Failed to press Enter: {:?}", e))?;
+    enigo
+        .key(enigo::Key::Return, Direction::Release)
+        .map_err(|e| format!("Failed to release Enter: {:?}", e))?;
+
     Ok(())
 }
 
