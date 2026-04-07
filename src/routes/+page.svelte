@@ -388,6 +388,26 @@
     <span>^Z undo</span>
   </div>
 </div>
+
+  {#if showSpeedDialog}
+    <div class="modal-overlay" role="dialog" tabindex="-1" onkeydown={(e) => e.key === "Escape" && cancelSpeedDialog()}>
+      <div class="modal-content">
+        <h3>Typing Speed</h3>
+        <p>Speed (10-500 ms per character):</p>
+        <input
+          type="number"
+          bind:value={speedDialogInput}
+          min="10"
+          max="500"
+          onkeydown={(e) => e.key === "Enter" && applySpeedDialog()}
+        />
+        <div class="modal-buttons">
+          <button onclick={() => applySpeedDialog()}>Apply</button>
+          <button onclick={() => cancelSpeedDialog()}>Cancel</button>
+        </div>
+      </div>
+    </div>
+  {/if}
 {/if}
 
 <style>
@@ -603,5 +623,79 @@
     font-size: 0.7rem;
     color: rgba(158, 166, 192, 0.6);
     border-top: 1px solid rgba(255, 255, 255, 0.04);
+  }
+
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+
+  .modal-content {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    min-width: 300px;
+    color: #333;
+  }
+
+  .modal-content h3 {
+    margin-top: 0;
+    font-size: 18px;
+  }
+
+  .modal-content p {
+    margin: 10px 0 5px 0;
+    font-size: 14px;
+  }
+
+  .modal-content input {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    box-sizing: border-box;
+  }
+
+  .modal-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+  }
+
+  .modal-buttons button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+
+  .modal-buttons button:first-child {
+    background: #4CAF50;
+    color: white;
+  }
+
+  .modal-buttons button:first-child:hover {
+    background: #45a049;
+  }
+
+  .modal-buttons button:last-child {
+    background: #f44336;
+    color: white;
+  }
+
+  .modal-buttons button:last-child:hover {
+    background: #da190b;
   }
 </style>
