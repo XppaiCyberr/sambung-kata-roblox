@@ -141,6 +141,7 @@ impl WordIndex {
         let limit = request.limit.unwrap_or(DEFAULT_LIMIT).clamp(1, MAX_LIMIT);
         let needle = query.clone();
         let suffix = request.suffix.as_deref().map(normalize_token);
+        let query_length = query.len();
 
         if query.is_empty() {
             return SearchResponse {
@@ -153,7 +154,7 @@ impl WordIndex {
             };
         }
 
-        let (total_matches, results) = self.search_prefix(&needle, limit, suffix.as_deref());
+        let (total_matches, results) = self.search_prefix(&needle, limit, suffix.as_deref(), query_length);
 
         let message = if total_matches == 0 {
             format!("No words start with \"{}\".", needle)
@@ -178,7 +179,7 @@ impl WordIndex {
         }
     }
 
-    fn search_prefix(&self, needle: &str, limit: usize, suffix: Option<&str>) -> (usize, Vec<WordSuggestion>) {
+    fn search_prefix(&self, needle: &str, limit: usize, suffix: Option<&str>, query_length: usize) -> (usize, Vec<WordSuggestion>) {
         let Some(bucket_key) = first_chars(needle, needle.chars().count().min(3)) else {
             return (0, Vec::new());
         };
@@ -187,7 +188,7 @@ impl WordIndex {
             return (0, Vec::new());
         };
 
-        self.collect_matches(indexes, limit, suffix, |entry| entry.normalized.starts_with(needle))
+        self.collect_matches(indexes, limit, suffix, query_length, |entry| entry.normalized.starts_with(needle))
     }
 
     fn collect_matches<F>(
@@ -195,6 +196,7 @@ impl WordIndex {
         indexes: &[usize],
         limit: usize,
         suffix: Option<&str>,
+        query_length: usize,
         predicate: F,
     ) -> (usize, Vec<WordSuggestion>)
     where
@@ -206,6 +208,11 @@ impl WordIndex {
         for &index in indexes {
             let entry = &self.entries[index];
             if !predicate(entry) {
+                continue;
+            }
+
+            // Skip words with the same length as the query
+            if entry.length == query_length {
                 continue;
             }
 
