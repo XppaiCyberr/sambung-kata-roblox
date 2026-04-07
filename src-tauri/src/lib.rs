@@ -300,6 +300,49 @@ fn quit_app(app: AppHandle) {
     app.exit(0);
 }
 
+fn normalize_text(text: &str) -> String {
+    text
+        .chars()
+        .filter(|c| c.is_alphabetic() || *c == '-')
+        .collect::<String>()
+        .to_lowercase()
+}
+
+fn calculate_text_to_type(word: &str, query: &str) -> String {
+    let normalized_word = normalize_text(word);
+    let normalized_query = normalize_text(query);
+
+    if normalized_word.starts_with(&normalized_query) {
+        normalized_word[normalized_query.len()..].to_string()
+    } else {
+        normalized_word
+    }
+}
+
+#[tauri::command]
+async fn type_and_hide(
+    window: tauri::Window,
+    word: String,
+    query: String,
+    speed: u64,
+) -> Result<(), String> {
+    let text_to_type = calculate_text_to_type(&word, &query);
+
+    // Hide window immediately
+    window.hide().map_err(|e| e.to_string())?;
+
+    // Simulate keystrokes with delay
+    use enigo::{Enigo, KeyboardControllable};
+    let mut enigo = Enigo::new();
+
+    for ch in text_to_type.chars() {
+        enigo.key_sequence(&ch.to_string());
+        std::thread::sleep(std::time::Duration::from_millis(speed));
+    }
+
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -329,7 +372,8 @@ pub fn run() {
             wordlist_info,
             search_words,
             hide_overlay,
-            quit_app
+            quit_app,
+            type_and_hide
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
