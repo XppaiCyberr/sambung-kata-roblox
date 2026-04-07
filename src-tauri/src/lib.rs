@@ -336,7 +336,9 @@ async fn type_and_hide(
     let mut enigo = Enigo::new();
 
     for ch in text_to_type.chars() {
-        enigo.key_sequence(&ch.to_string());
+        enigo
+            .key_sequence_parse_try(&ch.to_string())
+            .map_err(|e| format!("Failed to type character: {:?}", e))?;
         std::thread::sleep(std::time::Duration::from_millis(speed));
     }
 
