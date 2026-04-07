@@ -216,6 +216,9 @@ impl WordIndex {
             }
         }
 
+        // Sort by length (shortest to longest)
+        results.sort_by_key(|s| s.length);
+
         (total_matches, results)
     }
 }
