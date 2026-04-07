@@ -33,6 +33,7 @@
   let wordlists = $state<WordlistInfo[]>([]);
   let typingSpeed = $state(50); // milliseconds per character
   let randomizeTyping = $state(false);
+  let suffixFilter = $state("");
   let showSpeedDialog = $state(false);
   let speedDialogInput = $state(""); // temp input for dialog
 
@@ -97,7 +98,7 @@
     errorMessage = "";
     try {
       const next = await invoke<SearchResponse>("search_words", {
-        request: { query, limit: SEARCH_LIMIT },
+        request: { query, limit: SEARCH_LIMIT, suffix: suffixFilter || undefined },
       });
       if (token !== requestToken) return;
       response = next;
@@ -254,13 +255,19 @@
     randomizeTyping = enabled;
   }
 
+  function saveSuffixFilter(suffix: string) {
+    localStorage.setItem("suffix_filter", suffix);
+    suffixFilter = suffix;
+  }
+
   function applySpeedDialog() {
     const parsed = parseInt(speedDialogInput, 10);
     if (!isNaN(parsed) && parsed >= 10 && parsed <= 500) {
       saveTypingSpeed(parsed);
       showSpeedDialog = false;
       const randomStr = randomizeTyping ? " + randomized" : "";
-      feedback = `Typing speed set to ${parsed}ms${randomStr}`;
+      const suffixStr = suffixFilter ? ` + suffix: ${suffixFilter}` : "";
+      feedback = `Typing speed set to ${parsed}ms${randomStr}${suffixStr}`;
       feedbackTimer = setTimeout(() => (feedback = ""), 2000);
     } else {
       errorMessage = "Speed must be between 10 and 500 ms";
@@ -309,6 +316,12 @@
     const savedRandomize = localStorage.getItem("randomize_typing");
     if (savedRandomize === "true") {
       randomizeTyping = true;
+    }
+
+    // Load suffix filter from localStorage
+    const savedSuffix = localStorage.getItem("suffix_filter");
+    if (savedSuffix) {
+      suffixFilter = savedSuffix;
     }
 
     let stopListening: (() => void) | undefined;
@@ -410,7 +423,7 @@
   {#if showSpeedDialog}
     <div class="modal-overlay" role="dialog" tabindex="-1" onkeydown={(e) => e.key === "Escape" && cancelSpeedDialog()}>
       <div class="modal-content">
-        <h3>Typing Speed</h3>
+        <h3>Typing Speed & Suffix</h3>
         <p>Speed (10-500 ms per character):</p>
         <input
           type="number"
@@ -429,6 +442,14 @@
             Randomize typing (±40% variance for human-like speed)
           </label>
         </div>
+        <p>Suffix filter (words ending with this appear first):</p>
+        <input
+          type="text"
+          bind:value={suffixFilter}
+          placeholder="e.g., 'if', 'an'"
+          onchange={(e) => saveSuffixFilter(e.target.value)}
+          onkeydown={(e) => e.key === "Enter" && applySpeedDialog()}
+        />
         <div class="modal-buttons">
           <button onclick={() => applySpeedDialog()}>Apply</button>
           <button onclick={() => cancelSpeedDialog()}>Cancel</button>
@@ -747,5 +768,15 @@
     width: 16px;
     height: 16px;
     cursor: pointer;
+  }
+
+  .modal-content input[type="text"] {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    box-sizing: border-box;
   }
 </style>

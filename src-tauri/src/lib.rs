@@ -37,6 +37,7 @@ static WORD_INDEX: OnceLock<WordIndex> = OnceLock::new();
 struct SearchRequest {
     query: String,
     limit: Option<usize>,
+    suffix: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -139,6 +140,7 @@ impl WordIndex {
         let query = normalize_query(&request.query);
         let limit = request.limit.unwrap_or(DEFAULT_LIMIT).clamp(1, MAX_LIMIT);
         let needle = query.clone();
+        let suffix = request.suffix.as_deref().map(normalize_token);
 
         if query.is_empty() {
             return SearchResponse {
@@ -151,7 +153,7 @@ impl WordIndex {
             };
         }
 
-        let (total_matches, results) = self.search_prefix(&needle, limit);
+        let (total_matches, results) = self.search_prefix(&needle, limit, suffix.as_deref());
 
         let message = if total_matches == 0 {
             format!("No words start with \"{}\".", needle)
@@ -176,7 +178,7 @@ impl WordIndex {
         }
     }
 
-    fn search_prefix(&self, needle: &str, limit: usize) -> (usize, Vec<WordSuggestion>) {
+    fn search_prefix(&self, needle: &str, limit: usize, suffix: Option<&str>) -> (usize, Vec<WordSuggestion>) {
         let Some(bucket_key) = first_chars(needle, needle.chars().count().min(3)) else {
             return (0, Vec::new());
         };
@@ -185,13 +187,14 @@ impl WordIndex {
             return (0, Vec::new());
         };
 
-        self.collect_matches(indexes, limit, |entry| entry.normalized.starts_with(needle))
+        self.collect_matches(indexes, limit, suffix, |entry| entry.normalized.starts_with(needle))
     }
 
     fn collect_matches<F>(
         &self,
         indexes: &[usize],
         limit: usize,
+        suffix: Option<&str>,
         predicate: F,
     ) -> (usize, Vec<WordSuggestion>)
     where
@@ -216,8 +219,17 @@ impl WordIndex {
             }
         }
 
-        // Sort by length (shortest to longest)
-        results.sort_by_key(|s| s.length);
+        // Sort: suffix match first, then by length (shortest to longest)
+        results.sort_by(|a, b| {
+            let a_ends_with_suffix = suffix.map_or(false, |s| a.word.to_lowercase().ends_with(s));
+            let b_ends_with_suffix = suffix.map_or(false, |s| b.word.to_lowercase().ends_with(s));
+
+            match (b_ends_with_suffix, a_ends_with_suffix) {
+                (true, false) => std::cmp::Ordering::Greater,
+                (false, true) => std::cmp::Ordering::Less,
+                _ => a.length.cmp(&b.length),
+            }
+        });
 
         (total_matches, results)
     }
