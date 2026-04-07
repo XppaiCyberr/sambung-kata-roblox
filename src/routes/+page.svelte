@@ -276,6 +276,11 @@
     suffixFilter = suffix;
   }
 
+  function setQuickSuffix(suffix: string) {
+    saveSuffixFilter(suffix);
+    flashFeedback(`Suffix set to: ${suffix}`);
+  }
+
   function applySpeedDialog() {
     const parsed = parseInt(speedDialogInput, 10);
     if (!isNaN(parsed) && parsed >= 10 && parsed <= 500) {
@@ -467,6 +472,13 @@
           onchange={(e) => saveSuffixFilter(e.target.value)}
           onkeydown={(e) => e.key === "Enter" && applySpeedDialog()}
         />
+        <div class="quick-suffix-buttons">
+          <button type="button" onclick={() => setQuickSuffix("if")}>if</button>
+          <button type="button" onclick={() => setQuickSuffix("an")}>an</button>
+          <button type="button" onclick={() => setQuickSuffix("kan")}>kan</button>
+          <button type="button" onclick={() => setQuickSuffix("i")}>i</button>
+          <button type="button" onclick={() => setQuickSuffix("")}>None</button>
+        </div>
         <div class="modal-buttons">
           <button onclick={() => applySpeedDialog()}>Apply</button>
           <button onclick={() => cancelSpeedDialog()}>Cancel</button>
@@ -795,5 +807,33 @@
     border-radius: 4px;
     font-size: 14px;
     box-sizing: border-box;
+  }
+
+  .quick-suffix-buttons {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+  }
+
+  .quick-suffix-buttons button {
+    padding: 6px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #f5f5f5;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s;
+  }
+
+  .quick-suffix-buttons button:hover {
+    background: #e8e8e8;
+    border-color: #999;
+  }
+
+  .quick-suffix-buttons button:active {
+    background: #4CAF50;
+    color: white;
+    border-color: #4CAF50;
   }
 </style>
