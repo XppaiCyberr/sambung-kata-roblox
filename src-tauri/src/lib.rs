@@ -357,6 +357,9 @@ async fn type_and_hide(
     // Hide window immediately
     window.hide().map_err(|e| e.to_string())?;
 
+    // Wait for window to fully hide and focus to transfer to the game
+    tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+
     // Simulate keystrokes with delay (using key presses for game compatibility)
     use enigo::{Enigo, Settings, Keyboard, Direction};
     let mut enigo = Enigo::new(&Settings::default())
