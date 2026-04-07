@@ -32,6 +32,7 @@
   let catalog = $state<CatalogInfo>({ shortcut: "Space", wordCount: 0 });
   let wordlists = $state<WordlistInfo[]>([]);
   let typingSpeed = $state(50); // milliseconds per character
+  let randomizeTyping = $state(false);
   let showSpeedDialog = $state(false);
   let speedDialogInput = $state(""); // temp input for dialog
 
@@ -226,6 +227,7 @@
         word: wordToType,
         query: query,
         speed: typingSpeed,
+        randomize: randomizeTyping,
       });
 
       // Remove the word after typing completes
@@ -247,12 +249,18 @@
     }
   }
 
+  function saveRandomizeTyping(enabled: boolean) {
+    localStorage.setItem("randomize_typing", enabled.toString());
+    randomizeTyping = enabled;
+  }
+
   function applySpeedDialog() {
     const parsed = parseInt(speedDialogInput, 10);
     if (!isNaN(parsed) && parsed >= 10 && parsed <= 500) {
       saveTypingSpeed(parsed);
       showSpeedDialog = false;
-      feedback = `Typing speed set to ${parsed}ms`;
+      const randomStr = randomizeTyping ? " + randomized" : "";
+      feedback = `Typing speed set to ${parsed}ms${randomStr}`;
       feedbackTimer = setTimeout(() => (feedback = ""), 2000);
     } else {
       errorMessage = "Speed must be between 10 and 500 ms";
@@ -295,6 +303,12 @@
       if (!isNaN(parsed) && parsed >= 10 && parsed <= 500) {
         typingSpeed = parsed;
       }
+    }
+
+    // Load randomize setting from localStorage
+    const savedRandomize = localStorage.getItem("randomize_typing");
+    if (savedRandomize === "true") {
+      randomizeTyping = true;
     }
 
     let stopListening: (() => void) | undefined;
@@ -405,6 +419,16 @@
           max="500"
           onkeydown={(e) => e.key === "Enter" && applySpeedDialog()}
         />
+        <div class="randomize-option">
+          <label>
+            <input
+              type="checkbox"
+              bind:checked={randomizeTyping}
+              onchange={(e) => saveRandomizeTyping(e.target.checked)}
+            />
+            Randomize typing (±40% variance for human-like speed)
+          </label>
+        </div>
         <div class="modal-buttons">
           <button onclick={() => applySpeedDialog()}>Apply</button>
           <button onclick={() => cancelSpeedDialog()}>Cancel</button>
@@ -701,5 +725,27 @@
 
   .modal-buttons button:last-child:hover {
     background: #da190b;
+  }
+
+  .randomize-option {
+    margin: 15px 0;
+    padding: 10px;
+    background: #f9f9f9;
+    border-radius: 4px;
+  }
+
+  .randomize-option label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #333;
+  }
+
+  .randomize-option input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
   }
 </style>

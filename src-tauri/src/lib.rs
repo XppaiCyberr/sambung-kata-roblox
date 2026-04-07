@@ -354,6 +354,7 @@ async fn type_and_hide(
     word: String,
     query: String,
     speed: u64,
+    randomize: Option<bool>,
 ) -> Result<(), String> {
     let text_to_type = calculate_text_to_type(&word, &query);
 
@@ -368,6 +369,8 @@ async fn type_and_hide(
     let mut enigo = Enigo::new(&Settings::default())
         .map_err(|e| format!("Failed to initialize keyboard controller: {:?}", e))?;
 
+    let should_randomize = randomize.unwrap_or(false);
+
     for ch in text_to_type.chars() {
         let key = char_to_key(ch);
 
@@ -381,7 +384,18 @@ async fn type_and_hide(
             .key(key, Direction::Release)
             .map_err(|e| format!("Failed to release key: {:?}", e))?;
 
-        tokio::time::sleep(std::time::Duration::from_millis(speed)).await;
+        // Calculate actual delay with randomization if enabled
+        let actual_delay = if should_randomize {
+            // ±40% variance for human-like typing
+            use rand::Rng;
+            let variance = rand::thread_rng().gen_range(-40..=40) as f64 / 100.0;
+            let delay = (speed as f64 * (1.0 + variance)) as u64;
+            delay.max(10) // Minimum 10ms
+        } else {
+            speed
+        };
+
+        tokio::time::sleep(std::time::Duration::from_millis(actual_delay)).await;
     }
 
     // Press Enter to submit the word
