@@ -31,6 +31,7 @@
   let response = $state<SearchResponse | null>(null);
   let catalog = $state<CatalogInfo>({ shortcut: "Space", wordCount: 0 });
   let wordlists = $state<WordlistInfo[]>([]);
+  let typingSpeed = $state(50); // milliseconds per character
 
   let inputElement = $state<HTMLInputElement | null>(null);
   let feedbackTimer: ReturnType<typeof setTimeout> | undefined;
@@ -226,6 +227,13 @@
     }
   }
 
+  function saveTypingSpeed(speed: number) {
+    if (speed >= 10 && speed <= 500) {
+      localStorage.setItem("typing_speed_ms", speed.toString());
+      typingSpeed = speed;
+    }
+  }
+
   $effect(() => {
     query;
     void runSearch();
@@ -250,6 +258,15 @@
   });
 
   onMount(() => {
+    // Load typing speed from localStorage
+    const savedSpeed = localStorage.getItem("typing_speed_ms");
+    if (savedSpeed) {
+      const parsed = parseInt(savedSpeed, 10);
+      if (!isNaN(parsed) && parsed >= 10 && parsed <= 500) {
+        typingSpeed = parsed;
+      }
+    }
+
     let stopListening: (() => void) | undefined;
     void loadApp();
     void listen(OVERLAY_EVENT, async () => {
