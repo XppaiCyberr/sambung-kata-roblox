@@ -145,6 +145,16 @@
     removeWord(selectedWord.word);
   }
 
+  function selectRandomWord() {
+    if (visibleCount === 0) {
+      flashFeedback("No words available");
+      return;
+    }
+    const randomIndex = Math.floor(Math.random() * visibleCount);
+    selectedIndex = randomIndex;
+    flashFeedback(`Random: ${visibleResults[randomIndex].word}`);
+  }
+
   function undoLastRemoval() {
     if (removedWords.length === 0) {
       flashFeedback("Nothing to undo.");
@@ -214,6 +224,12 @@
       event.preventDefault();
       showSpeedDialog = true;
       speedDialogInput = typingSpeed.toString();
+      return;
+    }
+
+    if (event.ctrlKey && event.key.toLowerCase() === "r") {
+      event.preventDefault();
+      selectRandomWord();
       return;
     }
   }
@@ -417,6 +433,7 @@
     <span>Esc hide</span>
     <span>Enter remove</span>
     <span>^Z undo</span>
+    <span>^R random</span>
   </div>
 </div>
 
